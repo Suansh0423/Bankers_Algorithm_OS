@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banker's Algorithm Visual Simulator | OS Mini-Project</title>
+  <meta name="description" content="Interactive visual simulator and deadlock avoidance analyzer for the Banker's Algorithm. Operating Systems mini-project with safety check, resource-request simulation, interactive RAG graph, and viva preparation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header / Navbar -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+            <path d="M7 8h10M7 12h10M7 16h6"></path>
+          </svg>
+          <span>OS LAB PROJECT</span>
+        </div>
+        <div class="title-group">
+          <h1>Banker's Algorithm <span class="gradient-text">Visualizer</span></h1>
+          <p class="subtitle">Deadlock Avoidance & Safety Algorithm Interactive Laboratory</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Preset Dropdown -->
+        <div class="control-group">
+          <label for="presetSelect">Scenario Preset:</label>
+          <select id="presetSelect" class="styled-select">
+            <option value="classicSafe">Classic Safe State (5 Processes, 3 Resources)</option>
+            <option value="unsafeDeadlock">Unsafe State / Deadlock Trap</option>
+            <option value="multiResource">High Contention (6 Processes, 4 Resources)</option>
+            <option value="singleResource">Edge Case (3 Processes, 1 Resource)</option>
+            <option value="random">Generate Random Balanced State</option>
+          </select>
+        </div>
+
+        <button id="btnAudioToggle" class="btn btn-icon" title="Toggle Sound Effects" aria-label="Toggle Sound Effects">
+          <svg id="iconSoundOn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg id="iconSoundOff" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+
+        <button id="btnOpenReport" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Export Report
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="simulator">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Safety Simulator & Matrices
+      </button>
+      <button class="nav-tab" data-tab="request">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Resource Request Simulation
+      </button>
+      <button class="nav-tab" data-tab="graph">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        Resource Allocation Graph (RAG)
+      </button>
+      <button class="nav-tab" data-tab="theory">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        Theory & Viva Voce Q&A
+      </button>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+      
+      <!-- TAB 1: SAFETY SIMULATOR -->
+      <section id="tab-simulator" class="tab-pane active">
+        
+        <!-- Matrix Configuration & Dimensions Toolbar -->
+        <div class="glass-panel config-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="indicator-dot"></span>
+              <h3>System Matrix Configuration</h3>
+            </div>
+            <div class="dimension-controls">
+              <div class="dim-group">
+                <span class="dim-label">Processes (n):</span>
+                <button id="btnRemoveProcess" class="btn btn-sm btn-outline" title="Remove Process">-</button>
+                <span id="processCountDisplay" class="dim-value">5</span>
+                <button id="btnAddProcess" class="btn btn-sm btn-outline" title="Add Process">+</button>
+              </div>
+              <div class="dim-separator"></div>
+              <div class="dim-group">
+                <span class="dim-label">Resource Types (m):</span>
+                <button id="btnRemoveResource" class="btn btn-sm btn-outline" title="Remove Resource">-</button>
+                <span id="resourceCountDisplay" class="dim-value">3</span>
+                <button id="btnAddResource" class="btn btn-sm btn-outline" title="Add Resource">+</button>
+              </div>
+              <div class="dim-separator"></div>
+              <button id="btnResetData" class="btn btn-sm btn-ghost" title="Reset to current preset">Reset</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Matrices Grid -->
+          <div class="matrices-grid">
+            
+            <!-- Allocation Matrix -->
+            <div class="matrix-card">
+              <div class="matrix-card-header">
+                <h4>Allocation Matrix</h4>
+                <span class="matrix-badge">Current Allocation</span>
+              </div>
+              <p class="matrix-desc">Resources currently allocated to each process ($Allocation[i][j]$)</p>
+              <div class="table-scroll-container">
+                <table id="tableAllocation" class="matrix-table">
+                  <!-- Populated by JS -->
+                </table>
+              </div>
+            </div>
+
+            <!-- Max Matrix -->
+            <div class="matrix-card">
+              <div class="matrix-card-header">
+                <h4>Max Matrix</h4>
+                <span class="matrix-badge">Maximum Demand</span>
+              </div>
+              <p class="matrix-desc">Maximum claim of each process ($Max[i][j]$)</p>
+              <div class="table-scroll-container">
+                <table id="tableMax" class="matrix-table">
+                  <!-- Populated by JS -->
+                </table>
+              </div>
+            </div>
+
+            <!-- Need Matrix (Calculated) -->
+            <div class="matrix-card highlight-card">
+              <div class="matrix-card-header">
+                <h4>Need Matrix</h4>
+                <span class="matrix-badge calculated-badge">Auto: Max - Alloc</span>
+              </div>
+              <p class="matrix-desc">Remaining resources each process may need ($Need[i][j]$)</p>
+              <div class="table-scroll-container">
+                <table id="tableNeed" class="matrix-table readonly-table">
+                  <!-- Populated by JS -->
+                </table>
+              </div>
+            </div>
+
+            <!-- Available Vector & Total Resources -->
+            <div class="matrix-card">
+              <div class="matrix-card-header">
+                <h4>Available & Total Vectors</h4>
+                <span class="matrix-badge">System Resources</span>
+              </div>
+              <p class="matrix-desc">Currently free resources & total system instances</p>
+              
+              <div class="vector-container">
+                <div class="vector-subgroup">
+                  <label class="vector-label">Available ($Available[j]$):</label>
+                  <table id="tableAvailable" class="matrix-table vector-table">
+                    <!-- Populated by JS -->
+                  </table>
+                </div>
+
+                <div class="vector-subgroup">
+                  <label class="vector-label">Total in System ($Total = Available + \sum Alloc$):</label>
+                  <div id="displayTotalResources" class="vector-chips">
+                    <!-- Populated by JS -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick validation warning notice -->
+              <div id="validationWarning" class="validation-warning hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span id="validationWarningText">Allocation cannot exceed Max demand.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Visual Step-by-Step Execution Deck -->
+        <div class="glass-panel execution-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="10 8 16 12 10 16 10 8"></polygon>
+              </svg>
+              <h3>Safety Algorithm Step-by-Step Visualizer</h3>
+            </div>
+
+            <!-- Playback Controls -->
+            <div class="playback-controls">
+              <button id="btnPrevStep" class="btn btn-icon btn-secondary" title="Previous Step" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                  <line x1="5" y1="19" x2="5" y2="5"></line>
+                </svg>
+              </button>
+              
+              <button id="btnPlayPause" class="btn btn-primary">
+                <svg id="iconPlay" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg id="iconPause" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                <span id="playBtnText">Auto Play</span>
+              </button>
+
+              <button id="btnNextStep" class="btn btn-icon btn-secondary" title="Next Step">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                  <line x1="19" y1="5" x2="19" y2="19"></line>
+                </svg>
+              </button>
+
+              <button id="btnRestart" class="btn btn-icon btn-ghost" title="Reset Simulation">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="1 4 1 10 7 10"></polyline>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+              </button>
+
+              <div class="speed-slider-group">
+                <span class="speed-label">Speed:</span>
+                <input type="range" id="speedSlider" min="300" max="2200" step="100" value="1000" title="Animation delay">
+                <span id="speedValueText" class="speed-value">1.0s</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live State Tracking: Work Vector & Finish Array -->
+          <div class="simulation-dashboard">
+            
+            <div class="state-card work-card">
+              <div class="state-header">
+                <span class="state-name">Work Vector (Available in Step):</span>
+                <span id="workFormulaDesc" class="state-desc">Work = Available initially</span>
+              </div>
+              <div id="workVectorDisplay" class="vector-display-chips">
+                <!-- Dynamically populated: e.g. [A: 3, B: 3, C: 2] -->
+              </div>
+            </div>
+
+            <div class="state-card finish-card">
+              <div class="state-header">
+                <span class="state-name">Finish Flags ($Finish[i]$):</span>
+                <span id="finishRatioDisplay" class="state-desc">0 / 5 Completed</span>
+              </div>
+              <div id="finishFlagsDisplay" class="finish-chips-container">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Active Step Details Card -->
+          <div class="step-detail-card" id="stepDetailCard">
+            <div class="step-badge-row">
+              <span id="stepNumberBadge" class="step-pill">Step 0: Initial State</span>
+              <span id="stepActionBadge" class="action-pill ready">Ready to Begin</span>
+            </div>
+            
+            <div class="step-math-box" id="stepMathBox">
+              <div class="math-comparison" id="mathComparison">
+                Click <strong>Next Step</strong> or <strong>Auto Play</strong> to start Safety Evaluation.
+              </div>
+              <div class="math-explanation" id="mathExplanation">
+                The algorithm will test each unfinished process to check if $Need[i] \le Work$. If satisfied, the process executes and releases its allocated resources.
+              </div>
+            </div>
+          </div>
+
+          <!-- Safe Sequence Visual Timeline / Queue -->
+          <div class="safe-sequence-panel">
+            <div class="seq-header">
+              <h4>Safe Sequence Order:</h4>
+              <span id="sequenceStatusText" class="seq-status">Building sequence...</span>
+            </div>
+            <div class="sequence-track" id="sequenceTrack">
+              <!-- Animated Sequence Pills: e.g. [P1] -> [P3] -> [P4] -->
+              <div class="empty-sequence-msg">No processes completed yet</div>
+            </div>
+          </div>
+
+          <!-- Final Safety Verdict Banner -->
+          <div id="safetyVerdictBanner" class="verdict-banner hidden">
+            <div class="verdict-icon" id="verdictIcon"></div>
+            <div class="verdict-content">
+              <h3 id="verdictTitle">SYSTEM IS IN A SAFE STATE</h3>
+              <p id="verdictDescription">All processes can successfully execute to completion without deadlock.</p>
+              <div id="verdictSequenceBox" class="verdict-sequence"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- TAB 2: RESOURCE REQUEST SIMULATION -->
+      <section id="tab-request" class="tab-pane">
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              <h3>Resource-Request Algorithm (What-If Simulation)</h3>
+            </div>
+          </div>
+
+          <div class="request-intro">
+            <p>
+              When a process $P_i$ makes a dynamic resource request, the OS must determine whether granting it immediately preserves system safety or risks deadlock.
+            </p>
+          </div>
+
+          <div class="request-form-container">
+            <form id="resourceRequestForm" class="request-form" onsubmit="return false;">
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="requestProcessSelect">Select Requesting Process ($P_i$):</label>
+                  <select id="requestProcessSelect" class="styled-select">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <label class="form-label-full">Specify Requested Resource Quantities ($Request_i$):</label>
+                <div id="requestInputsContainer" class="request-inputs-grid">
+                  <!-- Inputs for A, B, C... generated dynamically -->
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button id="btnEvaluateRequest" class="btn btn-primary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  Evaluate Request Safety
+                </button>
+                <button id="btnResetRequestForm" class="btn btn-secondary" type="button">Reset Values</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Request Evaluation Result Stage -->
+          <div id="requestResultSection" class="request-result-section hidden">
+            
+            <div class="checks-progression">
+              
+              <!-- Check 1 -->
+              <div class="check-card" id="checkCard1">
+                <div class="check-status-icon" id="checkIcon1">1</div>
+                <div class="check-body">
+                  <h4>Rule 1: Maximum Claim Check</h4>
+                  <div class="check-formula" id="checkFormula1">$Request_i \le Need_i$</div>
+                  <p class="check-desc" id="checkDesc1">Process cannot request more than its declared maximum demand.</p>
+                </div>
+              </div>
+
+              <!-- Check 2 -->
+              <div class="check-card" id="checkCard2">
+                <div class="check-status-icon" id="checkIcon2">2</div>
+                <div class="check-body">
+                  <h4>Rule 2: Availability Check</h4>
+                  <div class="check-formula" id="checkFormula2">$Request_i \le Available$</div>
+                  <p class="check-desc" id="checkDesc2">Sufficient system resources must currently be free.</p>
+                </div>
+              </div>
+
+              <!-- Check 3 -->
+              <div class="check-card" id="checkCard3">
+                <div class="check-status-icon" id="checkIcon3">3</div>
+                <div class="check-body">
+                  <h4>Rule 3: Pretend Safety Check</h4>
+                  <div class="check-formula" id="checkFormula3">SafetyAlgorithm(Simulated State)</div>
+                  <p class="check-desc" id="checkDesc3">System tests hypothetical state to ensure no deadlock occurs.</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Decision Banner -->
+            <div id="requestDecisionBanner" class="request-decision-banner">
+              <div id="requestDecisionTitle" class="decision-title">Evaluation in progress...</div>
+              <div id="requestDecisionDetails" class="decision-details"></div>
+              <div class="decision-buttons">
+                <button id="btnApplyRequestPermanently" class="btn btn-success hidden">Apply to Main Matrices</button>
+              </div>
+            </div>
+
+            <!-- Simulated Matrices Preview -->
+            <div class="simulated-preview-box" id="simulatedPreviewBox">
+              <h4>Hypothetical State Preview (Pretend Allocation)</h4>
+              <p class="preview-note">$Available = Available - Request$, $Allocation_i = Allocation_i + Request$, $Need_i = Need_i - Request$</p>
+              <div id="simulatedMatricesContainer" class="simulated-grid">
+                <!-- Generated preview tables -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: RESOURCE ALLOCATION GRAPH (RAG) -->
+      <section id="tab-graph" class="tab-pane">
+        <div class="glass-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <h3>Interactive Resource Allocation Graph (RAG)</h3>
+            </div>
+            <div class="rag-legend">
+              <span class="legend-item"><span class="legend-dot process-dot"></span> Process ($P_i$)</span>
+              <span class="legend-item"><span class="legend-dot resource-dot"></span> Resource ($R_j$)</span>
+              <span class="legend-item"><span class="legend-line alloc-line"></span> Allocation Edge ($R \to P$)</span>
+              <span class="legend-item"><span class="legend-line request-line"></span> Request/Claim Edge ($P \to R$)</span>
+            </div>
+          </div>
+
+          <div class="rag-container">
+            <div class="canvas-wrapper">
+              <canvas id="ragCanvas" width="900" height="520"></canvas>
+            </div>
+            <div class="rag-sidebar">
+              <h4>System Entity Status</h4>
+              <div id="ragEntityList" class="entity-list">
+                <!-- Dynamic entity chips -->
+              </div>
+              <div class="rag-tip">
+                <strong>💡 Graph Insight:</strong>
+                <p>A cycle in a Resource Allocation Graph with multiple instances is a <em>necessary</em> condition for deadlock, but not always <em>sufficient</em>. Banker's Algorithm evaluates the exact numerical capacity to guarantee safety.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: THEORY & VIVA VOCE GUIDE -->
+      <section id="tab-theory" class="tab-pane">
+        <div class="theory-grid">
+          
+          <!-- Column 1: Core Concept & Mathematical Formulation -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <h3>Banker's Algorithm Core Foundations</h3>
+              </div>
+            </div>
+
+            <div class="theory-article">
+              <h4>1. Origin & The Banking Analogy</h4>
+              <p>
+                Developed by <strong>Edsger W. Dijkstra</strong> in 1965, the Banker's Algorithm is a <strong>deadlock avoidance</strong> algorithm. 
+                It is named after a conservative small-town banker who never allocates available cash in such a way that he can no longer satisfy the maximum credit claims of at least one customer.
+              </p>
+
+              <h4>2. Essential Data Structures</h4>
+              <div class="formula-card">
+                <ul>
+                  <li><strong>Available[m]:</strong> If $Available[j] = k$, there are $k$ instances of resource type $R_j$ available.</li>
+                  <li><strong>Max[n][m]:</strong> If $Max[i][j] = k$, process $P_i$ may request at most $k$ instances of $R_j$.</li>
+                  <li><strong>Allocation[n][m]:</strong> If $Allocation[i][j] = k$, process $P_i$ is currently allocated $k$ instances of $R_j$.</li>
+                  <li><strong>Need[n][m]:</strong> Remaining resource need: 
+                    <span class="code-highlight">Need[i][j] = Max[i][j] - Allocation[i][j]</span>
+                  </li>
+                </ul>
+              </div>
+
+              <h4>3. The Safety Algorithm</h4>
+              <div class="algorithm-steps">
+                <div class="alg-step">
+                  <span class="step-num">1</span>
+                  <div>Let $Work = Available$ and $Finish[i] = false$ for $i = 0, 1, \dots, n-1$.</div>
+                </div>
+                <div class="alg-step">
+                  <span class="step-num">2</span>
+                  <div>Find an index $i$ such that both:
+                    <br>a. $Finish[i] == false$
+                    <br>b. $Need_i \le Work$
+                    <br>If no such $i$ exists, go to Step 4.
+                  </div>
+                </div>
+                <div class="alg-step">
+                  <span class="step-num">3</span>
+                  <div>$Work = Work + Allocation_i$, $Finish[i] = true$. Go to Step 2.</div>
+                </div>
+                <div class="alg-step">
+                  <span class="step-num">4</span>
+                  <div>If $Finish[i] == true$ for all $i$, then the system is in a <strong>safe state</strong>.</div>
+                </div>
+              </div>
+
+              <h4>4. Time Complexity Analysis</h4>
+              <p>
+                For $n$ processes and $m$ resource types:
+                <br>• In the worst case, finding a process takes $O(m \cdot n)$. Repeating for all $n$ processes gives <strong>$O(m \cdot n^2)$</strong>.
+              </p>
+            </div>
+          </div>
+
+          <!-- Column 2: University Viva Voce Q&A -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <h3>Top University Viva Voce Questions</h3>
+              </div>
+            </div>
+
+            <div class="viva-accordion">
+              
+              <div class="viva-item">
+                <button class="viva-question">
+                  <span>Q1: What is the key difference between Deadlock Prevention and Deadlock Avoidance?</span>
+                  <span class="viva-arrow">▼</span>
+                </button>
+                <div class="viva-answer">
+                  <p><strong>Deadlock Prevention</strong> enforces constraints by eliminating at least one of the 4 Coffman conditions (Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait) ahead of time. This often leads to low resource utilization.</p>
+                  <p><strong>Deadlock Avoidance</strong> (like Banker's Algorithm) dynamically inspects every resource request with prior knowledge of maximum claims to ensure the system never enters an unsafe state.</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <button class="viva-question">
+                  <span>Q2: Is an Unsafe State always a Deadlock State?</span>
+                  <span class="viva-arrow">▼</span>
+                </button>
+                <div class="viva-answer">
+                  <p><strong>No!</strong> An unsafe state is NOT necessarily a deadlock. An unsafe state only means that the OS <em>cannot guarantee</em> that deadlock will not occur if all processes simultaneously demand their maximum claims. However, if processes release resources early or don't request their full max, deadlock might still be avoided.</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <button class="viva-question">
+                  <span>Q3: What are the primary drawbacks of Banker's Algorithm in real-world operating systems?</span>
+                  <span class="viva-arrow">▼</span>
+                </button>
+                <div class="viva-answer">
+                  <ul>
+                    <li>Processes must know and declare their maximum resource requirements in advance, which is rarely realistic.</li>
+                    <li>Number of processes and resources must remain fixed dynamically.</li>
+                    <li>Substantial runtime overhead of running an $O(m \cdot n^2)$ safety check on every single resource request.</li>
+                    <li>Resources must not fail or crash while held by processes.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <button class="viva-question">
+                  <span>Q4: What are the 4 necessary Coffman conditions for a deadlock to occur?</span>
+                  <span class="viva-arrow">▼</span>
+                </button>
+                <div class="viva-answer">
+                  <ol>
+                    <li><strong>Mutual Exclusion:</strong> At least one resource must be held in a non-shareable mode.</li>
+                    <li><strong>Hold and Wait:</strong> A process must be holding at least one resource and waiting to acquire additional resources.</li>
+                    <li><strong>No Preemption:</strong> Resources cannot be forcibly taken from a process holding them.</li>
+                    <li><strong>Circular Wait:</strong> A closed chain of processes exists where each process holds resources needed by the next.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <button class="viva-question">
+                  <span>Q5: How does the Resource-Request Algorithm handle a request that is greater than Available?</span>
+                  <span class="viva-arrow">▼</span>
+                </button>
+                <div class="viva-answer">
+                  <p>If $Request_i \le Need_i$ is true, but $Request_i > Available$, process $P_i$ must wait because the requested resources are currently unavailable. No state modification or safety check is executed until resources are freed.</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <button class="viva-question">
+                  <span>Q6: What is a Safe Sequence? Can there be multiple safe sequences?</span>
+                  <span class="viva-arrow">▼</span>
+                </button>
+                <div class="viva-answer">
+                  <p>A sequence of processes $\langle P_0, P_1, \dots, P_{n-1} \rangle$ is a <strong>safe sequence</strong> if, for each $P_i$, the resources that $P_i$ can still request can be satisfied by currently available resources plus resources held by all preceding processes $P_j$ ($j < i$).</p>
+                  <p><strong>Yes</strong>, a system can have multiple valid safe sequences depending on which eligible process executes first.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div>Banker's Algorithm Visual Simulator • Designed for OS Laboratory Mini-Projects</div>
+      <div class="footer-meta">University CS / IT Lab Assessment Suite • Dijkstra Deadlock Avoidance Model</div>
+    </footer>
+  </div>
+
+  <!-- PROJECT REPORT MODAL (Ready to print / PDF export) -->
+  <div id="reportModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <h3>Operating Systems Mini-Project Lab Report</h3>
+        </div>
+        <button id="btnCloseReport" class="btn btn-icon btn-ghost" aria-label="Close modal">✕</button>
+      </div>
+
+      <div class="modal-body printable-area" id="printableReportArea">
+        <!-- University Title Banner -->
+        <div class="report-header-banner">
+          <h2>OPERATING SYSTEMS LABORATORY PROJECT REPORT</h2>
+          <div class="report-sub">IMPLEMENTATION & SIMULATION OF BANKER'S ALGORITHM FOR DEADLOCK AVOIDANCE</div>
+        </div>
+
+        <!-- Student Details Form (Editable for custom print) -->
+        <div class="student-meta-grid no-print">
+          <div class="meta-field">
+            <label>Student Name:</label>
+            <input type="text" id="reportStudentName" value="Student Name" class="meta-input">
+          </div>
+          <div class="meta-field">
+            <label>Roll Number / USN:</label>
+            <input type="text" id="reportRollNo" value="CS2026-001" class="meta-input">
+          </div>
+          <div class="meta-field">
+            <label>Semester / Branch:</label>
+            <input type="text" id="reportBranch" value="B.Tech Computer Science & Engineering" class="meta-input">
+          </div>
+          <div class="meta-field">
+            <label>Course Code:</label>
+            <input type="text" id="reportCourse" value="CS304 - Operating Systems" class="meta-input">
+          </div>
+        </div>
+
+        <!-- Student Meta Printed Version -->
+        <div class="student-meta-print only-print">
+          <p><strong>Candidate Name:</strong> <span id="printName">Student Name</span> &nbsp;|&nbsp; <strong>Roll No:</strong> <span id="printRoll">CS2026-001</span></p>
+          <p><strong>Department:</strong> <span id="printBranch">B.Tech Computer Science & Engineering</span> &nbsp;|&nbsp; <strong>Course:</strong> <span id="printCourse">CS304 - Operating Systems</span></p>
+          <p><strong>Date & Time of Simulation:</strong> <span id="printTimestamp"></span></p>
+          <hr>
+        </div>
+
+        <!-- Generated Report Content -->
+        <div id="reportContentDynamic" class="report-dynamic-content">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnPrintReport" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          Print / Save as PDF
+        </button>
+        <button id="btnCopyReportText" class="btn btn-secondary">Copy Summary Text</button>
+        <button id="btnCloseReportBottom" class="btn btn-ghost">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio element placeholder for synthesizers -->
+  <script src="app.js"></script>
+</body>
+</html>
